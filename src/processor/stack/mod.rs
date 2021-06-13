@@ -102,6 +102,8 @@ impl Stack {
             OpCode::Not         => self.op_not(),
             OpCode::And         => self.op_and(),
             OpCode::Or          => self.op_or(),
+            OpCode::Xor32         => self.op_xor32(),
+            OpCode::RotateLeft32  => self.op_rotateleft32(),
 
             OpCode::Eq          => self.op_eq(),
             OpCode::Cmp         => self.op_cmp(op_hint),
@@ -408,6 +410,25 @@ impl Stack {
         self.shift_left(2, 1);
     }
 
+    fn op_xor32(&mut self) {
+        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+        let x = self.registers[0][self.step - 1] as u32;
+        let y = self.registers[1][self.step - 1] as u32;
+        let r = x ^ y;
+        self.registers[0][self.step] = r as u128;
+        self.shift_left(2, 1);
+    }
+
+    fn op_rotateleft32(&mut self) {
+        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+        let x = self.registers[0][self.step - 1] as u32;
+        let x = x % 32;
+        let y = self.registers[1][self.step - 1] as u32;
+        let r = y.rotate_left(x);
+        self.registers[0][self.step] = r as u128;
+        self.shift_left(2, 1);
+    }
+
     fn op_inv(&mut self) {
         assert!(self.depth >= 1, "stack underflow at step {}", self.step);
         let x = self.registers[0][self.step - 1];
@@ -422,6 +443,9 @@ impl Stack {
         self.registers[0][self.step] = field::neg(x);
         self.copy_state(1);
     }
+
+
+
 
     fn op_not(&mut self) {
         assert!(self.depth >= 1, "stack underflow at step {}", self.step);
