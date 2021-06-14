@@ -16,7 +16,7 @@ use input::{ enforce_push, enforce_read, enforce_read2 };
 mod arithmetic;
 use arithmetic::{
     enforce_add, enforce_mul, enforce_inv, enforce_neg,
-    enforce_not, enforce_and, enforce_or,
+    enforce_not, enforce_and, enforce_or, enforce_rotateleft32, enforce_xor32
 };
 
 mod manipulation;
@@ -158,6 +158,8 @@ fn enforce_constraints(current: &TraceState, next: &TraceState, ark: &[u128], re
     // arithmetic and boolean operations
     enforce_add     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Add.ld_index()]);
     enforce_mul     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Mul.ld_index()]);
+    // enforce_rotateleft32     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::RotateLeft32.ld_index()]);
+    // enforce_xor32     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Xor32.ld_index()]);
     enforce_inv     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Inv.ld_index()]);
     enforce_neg     (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Neg.ld_index()]);
     enforce_not     (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Not.ld_index()]);

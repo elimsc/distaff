@@ -229,6 +229,26 @@ fn add() {
 }
 
 #[test]
+fn xor32() {
+    let mut stack = init_stack(&[1, 1], &[], &[], TRACE_LENGTH);
+    stack.execute(OpCode::Xor32, OpHint::None);
+    assert_eq!(vec![0, 0, 0, 0, 0, 0, 0, 0], get_stack_state(&stack, 1));
+
+    assert_eq!(1, stack.depth);
+    assert_eq!(2, stack.max_depth);
+}
+
+#[test]
+fn rotateleft32() {
+    let mut stack = init_stack(&[1, 1], &[], &[], TRACE_LENGTH);
+    stack.execute(OpCode::RotateLeft32, OpHint::None);
+    assert_eq!(vec![2, 0, 0, 0, 0, 0, 0, 0], get_stack_state(&stack, 1));
+
+    assert_eq!(1, stack.depth);
+    assert_eq!(2, stack.max_depth);
+}
+
+#[test]
 fn mul() {
     let mut stack = init_stack(&[2, 3], &[], &[], TRACE_LENGTH);
     stack.execute(OpCode::Mul, OpHint::None);

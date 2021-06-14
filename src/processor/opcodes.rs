@@ -63,8 +63,8 @@ pub enum UserOps {
     Neg         = 0b0_11_01101,         // no shift
     Not         = 0b0_11_01110,         // no shift
     //???       = 0b0_11_01111,
-    Xor32         = 0b0_10_00000,         // left shift: 1
-    RotateLeft32  = 0b0_10_00001,         // left shift: 1
+    Xor32         = 0b0_11_01111,         // left shift: 1
+    RotateLeft32  = 0b0_11_10110,         // left shift: 1
 
     Read        = 0b0_11_10000,         // right shift: 1
     Read2       = 0b0_11_10001,         // right shift: 2
