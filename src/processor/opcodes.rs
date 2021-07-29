@@ -65,6 +65,7 @@ pub enum UserOps {
     //???       = 0b0_11_01111,
     Xor32         = 0b0_11_01111,         // left shift: 1
     RotateLeft32  = 0b0_11_10110,         // left shift: 1
+    Truncate     = 0b0_11_10111,         // left shift: 1
 
     Read        = 0b0_11_10000,         // right shift: 1
     Read2       = 0b0_11_10001,         // right shift: 2
@@ -161,6 +162,7 @@ impl std::fmt::Display for UserOps {
             UserOps::Or         => write!(f, "or"),
             UserOps::Xor32        => write!(f, "xor32"),
             UserOps::RotateLeft32 => write!(f, "rotateleft32"),
+            UserOps::Truncate   => write!(f, "truncate"),
 
 
             UserOps::Eq         => write!(f, "eq"),

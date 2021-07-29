@@ -104,6 +104,7 @@ impl Stack {
             OpCode::Or          => self.op_or(),
             OpCode::Xor32         => self.op_xor32(),
             OpCode::RotateLeft32  => self.op_rotateleft32(),
+            OpCode::Truncate    => self.op_truncate(),
 
             OpCode::Eq          => self.op_eq(),
             OpCode::Cmp         => self.op_cmp(op_hint),
@@ -426,6 +427,21 @@ impl Stack {
         let y = self.registers[1][self.step - 1] as u32;
         let r = y.rotate_left(x);
         self.registers[0][self.step] = r as u128;
+        self.shift_left(2, 1);
+    }
+
+    fn op_truncate(&mut self) {
+        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+        let x = self.registers[0][self.step - 1];
+        let y = self.registers[1][self.step - 1];
+        assert!(x == 32 || x == 64, "truncate of undefined bits number: {}", y);
+        if x == 32 {
+            let r = y as u32;
+            self.registers[0][self.step] = r as u128;
+        } else if x == 64 {
+            let r = y as u64;
+            self.registers[0][self.step] = r as u128;
+        }
         self.shift_left(2, 1);
     }
 

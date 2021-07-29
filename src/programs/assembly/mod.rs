@@ -227,6 +227,7 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
         "or"     => parse_or(op_codes, &op, step),
         "rotateleft32" => parse_rotateleft32(op_codes, &op, step),
         "xor32" => parse_xor32(op_codes, &op, step),
+        "truncate" => parse_truncate(op_codes, &op, step),
 
         "eq"     => parse_eq(op_codes, op_hints, &op, step),
         "ne"     => parse_ne(op_codes, op_hints, &op, step),
