@@ -1,4 +1,4 @@
-use distaff::{self, ProgramInputs, assembly, ProofOptions };
+use distaff::{self, assembly, ProgramInputs, ProofOptions};
 use std::time::SystemTime;
 
 fn main() {
@@ -126,7 +126,8 @@ fn main() {
     ";
 
     let r = 20;
-    let program = assembly::compile(&format!("
+    let program = assembly::compile(&format!(
+        "
     begin
         read.ab
         add
@@ -232,8 +233,10 @@ fn main() {
         roll.4
         swap.1
         swap.2
-    end", r-1)
-    ).unwrap();
+    end",
+        r - 1
+    ))
+    .unwrap();
 
     // let program = assembly::compile("
     // begin
@@ -249,27 +252,46 @@ fn main() {
 
     // secret_b: B D A C
 
-    let inputs = ProgramInputs::new(&[],
-                                    &[696990083,3196702396,910905877,3209921037,3106564365,2328944015,2734557017,58907362,3850524052,92613717,3608639738,669101535,3968880884,1720448742,3034689109,1612621259,3763384689,508198172,2967861735,2428379322,4153311602,3828858958,2859885952,1957143118,456665587,2408810598,3024553074,3945429419,3671610182,3972435254,3941627220,4091825005,4003320023,1121966248,825074983,1439490815,1675080381,2016917173,3638930516,3894899950,851050727,3795796176,2517894528,946057899],
-                                    &[2003195204,4293844428,857870592,3148519816]);
+    let inputs = ProgramInputs::new(
+        &[],
+        &[
+            696990083, 3196702396, 910905877, 3209921037, 3106564365, 2328944015, 2734557017,
+            58907362, 3850524052, 92613717, 3608639738, 669101535, 3968880884, 1720448742,
+            3034689109, 1612621259, 3763384689, 508198172, 2967861735, 2428379322, 4153311602,
+            3828858958, 2859885952, 1957143118, 456665587, 2408810598, 3024553074, 3945429419,
+            3671610182, 3972435254, 3941627220, 4091825005, 4003320023, 1121966248, 825074983,
+            1439490815, 1675080381, 2016917173, 3638930516, 3894899950, 851050727, 3795796176,
+            2517894528, 946057899,
+        ],
+        &[2003195204, 4293844428, 857870592, 3148519816],
+    );
     // let's execute it
     let mut start = SystemTime::now();
     let (outputs, proof) = distaff::execute(
         &program,
-        &inputs,     // we won't provide any inputs
-        4,                          // we'll return one item from the stack
-        &ProofOptions::default());  // we'll be using default options
-    println!("execution time: {:?}", SystemTime::now().duration_since(start));
+        &inputs, // we won't provide any inputs
+        4,       // we'll return one item from the stack
+        &ProofOptions::default(),
+    ); // we'll be using default options
+    println!(
+        "execution time: {:?}",
+        SystemTime::now().duration_since(start)
+    );
 
-
-    // assert_eq!(vec![1130480137,572160948,3634114028,1944429752], outputs);
-    // assert_eq!(vec![2044764450, 42172886, 2223517021, 3216635275], outputs);
-    assert_eq!(vec![10634699042, 4337140182, 6518484317, 3216635275], outputs);
+    assert_eq!(
+        vec![10634699042, 4337140182, 6518484317, 3216635275],
+        outputs
+    );
 
     start = SystemTime::now();
-    match distaff::verify(program.hash(), &[], &[10634699042, 4337140182, 6518484317, 3216635275], &proof) {
+    match distaff::verify(
+        program.hash(),
+        &[],
+        &[10634699042, 4337140182, 6518484317, 3216635275],
+        &proof,
+    ) {
         Ok(_) => println!("Execution verified!"),
-        Err(msg) => println!("Execution verification failed: {}", msg)
+        Err(msg) => println!("Execution verification failed: {}", msg),
     }
     println!("verify time: {:?}", SystemTime::now().duration_since(start));
 }

@@ -8,7 +8,6 @@ pub mod conditional;
 pub mod fibonacci;
 pub mod merkle;
 pub mod range;
-pub mod rc6;
 
 pub struct Example {
     pub program         : Program,
