@@ -102,9 +102,6 @@ impl Stack {
             OpCode::Not         => self.op_not(),
             OpCode::And         => self.op_and(),
             OpCode::Or          => self.op_or(),
-            OpCode::Xor32         => self.op_xor32(),
-            OpCode::RotateLeft32  => self.op_rotateleft32(),
-            OpCode::Truncate    => self.op_truncate(),
 
             OpCode::Eq          => self.op_eq(),
             OpCode::Cmp         => self.op_cmp(op_hint),

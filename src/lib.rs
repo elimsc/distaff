@@ -117,9 +117,9 @@ const NUM_CF_OP_BITS        : usize = 3;
 const NUM_LD_OP_BITS        : usize = 5;
 const NUM_HD_OP_BITS        : usize = 2;
 
-const NUM_CF_OPS            : usize = 8;
-const NUM_LD_OPS            : usize = 32;
-const NUM_HD_OPS            : usize = 4;
+const NUM_CF_OPS            : usize = 8; // 2 ** 3, 占3个位置
+const NUM_LD_OPS            : usize = 32; // 2 ** 5, 占5个位置
+const NUM_HD_OPS            : usize = 4; // 2 ** 2, 占2个位置
 
 const OP_COUNTER_IDX        : usize = 0;
 const SPONGE_RANGE          : Range<usize> = Range { start:  1, end:  5 };

@@ -25,6 +25,7 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
 
     // extend the execution trace registers to LDE domain
     trace.extend(&lde_twiddles);
+    // trace长度为原来的32倍
     debug!("Extended execution trace from {} to {} steps in {} ms",
         trace.unextended_length(),
         trace.domain_size(), 
@@ -49,7 +50,10 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     // we don't need to evaluate constraints over the entire extended execution trace; we need
     // to evaluate them over the domain extended to match max constraint degree - thus, we can
     // skip most trace states for the purposes of constraint evaluation.
-    let stride = trace.extension_factor() / MAX_CONSTRAINT_DEGREE;
+    // https://github.com/GuildOfWeavers/distaff/blob/master/src/stark/README.md#3-evaluate-constraints
+    // However, in this step, we don't compute the full constraint polynomial.
+    // Instead, we compute linear combinations of constraint numerators(分子) only
+    let stride = trace.extension_factor() / MAX_CONSTRAINT_DEGREE; // 32 / 8 = 4
     for i in (0..trace.domain_size()).step_by(stride) {
         // TODO: this loop should be parallelized and also potentially optimized to avoid copying
         // next state from the trace table twice
@@ -60,12 +64,17 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         trace.fill_state(&mut next, (i + trace.extension_factor()) % trace.domain_size());
 
         // evaluate the constraints
+        // TODO 在mapreduce共享状态
+        // constraints.state[i/stride] = f(trace, i)
+        // i % 16   index-
         constraints.evaluate(&current, &next, lde_domain[i], i / stride);
     }
+    // 这里是计算约束多项式，取决于每个指令具体的含义
+    // TODO: 这里怎么分布式处理
 
     debug!("Evaluated {} constraints over domain of {} elements in {} ms",
         constraints.constraint_count(),
-        constraints.evaluation_domain_size(),
+        constraints.evaluation_domain_size(), // trace.domain_size() / stride
         now.elapsed().as_millis());
 
     // 4 ----- convert constraint evaluations into a polynomial -----------------------------------

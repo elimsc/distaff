@@ -278,6 +278,7 @@ impl TraceState {
 
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
+    // 设置 op_flags
     fn set_op_flags(&mut self) {
 
         // set control flow flags

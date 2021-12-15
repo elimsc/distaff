@@ -156,6 +156,7 @@ impl TraceTable {
         for poly in self.polys.iter_mut() {
 
             // interpolate register trace into a polynomial
+            // 求多项式
             polynom::interpolate_fft_twiddles(poly, &inv_twiddles, true);
             
             // allocate space to hold extended evaluations and copy the polynomial into it
@@ -163,8 +164,9 @@ impl TraceTable {
             register[..poly.len()].copy_from_slice(&poly);
             
             // evaluate the polynomial over extended domain
+            // 多项式求值
             polynom::eval_fft_twiddles(&mut register, &twiddles, true);
-            self.registers.push(register);
+            self.registers.push(register); // 现在registers里面存储的是扩展后的trace
         }
     }
 
@@ -176,9 +178,10 @@ impl TraceTable {
         let mut hashed_states = uninit_vector::<[u8; 32]>(self.domain_size());
         // TODO: this loop should be parallelized
         for i in 0..self.domain_size() {
-            for j in 0..trace_state.len() {
+            for j in 0..trace_state.len() { // j代表register的索引, 如果有20个register, j的取值范围到20
                 trace_state[j] = self.registers[j][i];
             }
+            // trace中的每一行的所有register值对应一个hash值
             hash(as_bytes(&trace_state), &mut hashed_states[i]);
         }
         return MerkleTree::new(hashed_states, hash);

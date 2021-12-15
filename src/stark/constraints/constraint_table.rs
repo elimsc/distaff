@@ -44,7 +44,7 @@ impl ConstraintTable {
     /// Evaluates transition and boundary constraints at the specified step.
     pub fn evaluate(&mut self, current: &TraceState, next: &TraceState, x: u128, step: usize) {
         let (init_bound, last_bound) = self.evaluator.evaluate_boundaries(current, x);
-        self.i_evaluations[step] = init_bound;
+        self.i_evaluations[step] = init_bound; // step下标处的值为多项式在x^step的系数, 即init_bound * x^step
         self.f_evaluations[step] = last_bound;
         self.t_evaluations[step] = self.evaluator.evaluate_transition(current, next, x, step);
     }
@@ -65,7 +65,7 @@ impl ConstraintTable {
         // interpolate initial step boundary constraint combination into a polynomial, divide the 
         // polynomial by Z(x) = (x - 1), and add it to the result
         polynom::interpolate_fft_twiddles(&mut self.i_evaluations, &inv_twiddles, true);
-        polynom::syn_div_in_place(&mut self.i_evaluations, field::ONE);
+        polynom::syn_div_in_place(&mut self.i_evaluations, field::ONE); // 多项式除法
         combined_poly.copy_from_slice(&self.i_evaluations);
 
         // 2 ----- boundary constraints for the final step ----------------------------------------
@@ -74,7 +74,7 @@ impl ConstraintTable {
         polynom::interpolate_fft_twiddles(&mut self.f_evaluations, &inv_twiddles, true);
         let x_at_last_step = self.evaluator.get_x_at_last_step();
         polynom::syn_div_in_place(&mut self.f_evaluations, x_at_last_step);
-        parallel::add_in_place(&mut combined_poly, &self.f_evaluations, 1);
+        parallel::add_in_place(&mut combined_poly, &self.f_evaluations, 1); // 系数相加
 
         // 3 ----- transition constraints ---------------------------------------------------------
         // interpolate transition constraint combination into a polynomial, divide the polynomial

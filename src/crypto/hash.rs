@@ -772,6 +772,7 @@ fn apply_mds(state: &mut [u128; 6]) {
 mod tests {
 
     use crate::utils::as_bytes;
+    use tiny_keccak::{Hasher, Sha3};
 
     #[test]
     fn poseidon() {
@@ -817,4 +818,17 @@ mod tests {
             result
         );
     }
+
+    // #[test]
+    // fn sha3_256() {
+    //     let mut result = [0u8; 32];
+    //     let mut sha3 = Sha3::v256();
+    //     sha3.update(&value);
+    //     sha3.finalize(&mut result);
+    //     let expected = b"\
+    //     \xe2\x92\x9f\x80\xff\xda\xaa\x51\xc4\x27\xcb\xf4\x2d\xf6\x67\x90\
+    //     \x13\xfd\xdb\x16\x30\xbc\x28\xf2\x34\xca\x48\x69\x2b\x35\x39\x92\
+    //     ";
+    //     assert_eq!(expected, &result);
+    // }
 }

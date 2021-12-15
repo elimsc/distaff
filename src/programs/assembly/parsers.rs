@@ -211,24 +211,6 @@ pub fn parse_div(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<
     return Ok(true);
 }
 
-pub fn parse_rotateleft32(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
-    program.push(OpCode::RotateLeft32);
-    return Ok(true);
-}
-
-pub fn parse_xor32(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
-    program.push(OpCode::Xor32);
-    return Ok(true);
-}
-
-pub fn parse_truncate(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
-    program.push(OpCode::Truncate);
-    return Ok(true);
-}
-
 /// Appends NEG operation to the program.
 pub fn parse_neg(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
     if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }

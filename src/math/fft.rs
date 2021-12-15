@@ -3,7 +3,7 @@ use crate::math::field;
 
 // CONSTANTS
 // ================================================================================================
-const USIZE_BITS: usize = 0_usize.count_zeros() as usize;
+const USIZE_BITS: usize = 0_usize.count_zeros() as usize; // 64
 const MAX_LOOP: usize = 256;
 
 // PUBLIC FUNCTIONS
@@ -112,6 +112,7 @@ fn butterfly_twiddle(values: &mut [u128], twiddle: u128, offset: usize, stride: 
 #[cfg(test)]
 mod tests {
     use crate::math::{ field, polynom };
+    use super::*;
 
     #[test]
     fn fft_in_place() {
@@ -154,5 +155,13 @@ mod tests {
         super::fft_in_place(&mut p, &twiddles, 1, 1, 0, 1);
         super::permute(&mut p);
         assert_eq!(expected, p);
+    }
+
+    #[test]
+    fn test_permute_index() {
+        assert_eq!(permute_index(4, 0), 0);
+        assert_eq!(permute_index(4, 1), 2);
+        assert_eq!(permute_index(4, 2), 1);
+        assert_eq!(permute_index(4, 3), 3);
     }
 }

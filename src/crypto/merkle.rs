@@ -1,5 +1,7 @@
 use std::slice;
 use std::collections::{ HashMap, BTreeSet };
+use std::fs::File;
+use std::io::Write;
 use serde::{ Serialize, Deserialize };
 use crate::crypto::{ HashFunction };
 
@@ -26,7 +28,14 @@ impl MerkleTree {
         assert!(leaves.len().is_power_of_two(), "number of leaves must be a power of 2");
         assert!(leaves.len() >= 2, "a tree must contain at least 2 leaves");
 
+        //TODO: 写文件，调用mr程序
+        // println!("write leaves to file");
+        // let leaves_str = serde_json::to_string(&leaves).unwrap();
+        // let mut file = File::create("tree.json").unwrap();
+        // write!(file, "{}", leaves_str).unwrap();
+
         let nodes = build_merkle_nodes(&leaves, hash);
+        // println!("tree root: {:?}", nodes[1]);
         return MerkleTree {
             values  : leaves,
             nodes   : nodes
@@ -267,10 +276,10 @@ impl MerkleTree {
 // ================================================================================================
 
 pub fn build_merkle_nodes(leaves: &[[u8; 32]], hash: HashFunction) -> Vec<[u8; 32]> {
-    let n = leaves.len() / 2;
+    let n = leaves.len() / 2; // leaves.len = 4, n = 2
 
     // create un-initialized array to hold all intermediate nodes
-    let mut nodes: Vec<[u8; 32]> = Vec::with_capacity(2 * n);
+    let mut nodes: Vec<[u8; 32]> = Vec::with_capacity(2 * n); // nodes.len = 4
     unsafe { nodes.set_len(2 * n); }
     nodes[0] = [0u8; 32];
 
@@ -344,6 +353,8 @@ mod tests {
             &hash_2x1(&LEAVES4[0], &LEAVES4[1]),
             &hash_2x1(&LEAVES4[2], &LEAVES4[3])
         );
+        assert_eq!(tree.nodes[2], hash_2x1(&LEAVES4[0], &LEAVES4[1]));
+        assert_eq!(tree.nodes[3], hash_2x1(&LEAVES4[2], &LEAVES4[3]));
         assert_eq!(&root, tree.root());
 
         let leaves = LEAVES8.to_vec();
