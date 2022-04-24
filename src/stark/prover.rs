@@ -1,20 +1,25 @@
-use std::time::Instant;
-use log::debug;
-use crate::{
-    math::{ field, polynom, fft },
-    crypto::MerkleTree,
-};
 use super::{
-    ProofOptions, StarkProof, CompositionCoefficients, DeepValues, fri, utils,
-    trace::{ TraceTable, TraceState },
-    constraints::{ ConstraintTable, ConstraintPoly },
-    MAX_CONSTRAINT_DEGREE,
+    constraints::{ConstraintPoly, ConstraintTable},
+    fri,
+    trace::{TraceState, TraceTable},
+    utils, CompositionCoefficients, DeepValues, ProofOptions, StarkProof, MAX_CONSTRAINT_DEGREE,
 };
+use crate::{
+    crypto::MerkleTree,
+    math::{fft, field, polynom},
+};
+use log::debug;
+use std::time::Instant;
 
 // PROVER FUNCTION
 // ================================================================================================
 
-pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options: &ProofOptions) -> StarkProof {
+pub fn prove(
+    trace: &mut TraceTable,
+    inputs: &[u128],
+    outputs: &[u128],
+    options: &ProofOptions,
+) -> StarkProof {
     // 1 ----- extend execution trace -------------------------------------------------------------
     let now = Instant::now();
 
@@ -26,23 +31,27 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     // extend the execution trace registers to LDE domain
     trace.extend(&lde_twiddles);
     // trace长度为原来的32倍
-    debug!("Extended execution trace from {} to {} steps in {} ms",
+    debug!(
+        "Extended execution trace from {} to {} steps in {} ms",
         trace.unextended_length(),
-        trace.domain_size(), 
-        now.elapsed().as_millis());
+        trace.domain_size(),
+        now.elapsed().as_millis()
+    );
 
     // 2 ----- build Merkle tree from the extended execution trace ------------------------------------
     let now = Instant::now();
     let trace_tree = trace.build_merkle_tree(options.hash_fn());
-    debug!("Built trace Merkle tree in {} ms", 
-        now.elapsed().as_millis());
+    debug!(
+        "Built trace Merkle tree in {} ms",
+        now.elapsed().as_millis()
+    );
 
     // 3 ----- evaluate constraints ---------------------------------------------------------------
     let now = Instant::now();
-    
+
     // initialize constraint evaluation table
     let mut constraints = ConstraintTable::new(&trace, trace_tree.root(), inputs, outputs);
-    
+
     // allocate space to hold current and next states for constraint evaluations
     let mut current = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
     let mut next = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
@@ -61,40 +70,43 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         // copy current and next states from the trace table; next state may wrap around the
         // execution trace (close to the end of the trace)
         trace.fill_state(&mut current, i);
-        trace.fill_state(&mut next, (i + trace.extension_factor()) % trace.domain_size());
+        trace.fill_state(
+            &mut next,
+            (i + trace.extension_factor()) % trace.domain_size(),
+        );
 
         // evaluate the constraints
-        // TODO 在mapreduce共享状态
-        // constraints.state[i/stride] = f(trace, i)
-        // i % 16   index-
         constraints.evaluate(&current, &next, lde_domain[i], i / stride);
     }
-    // 这里是计算约束多项式，取决于每个指令具体的含义
-    // TODO: 这里怎么分布式处理
-
-    debug!("Evaluated {} constraints over domain of {} elements in {} ms",
+    debug!(
+        "Evaluated {} constraints over domain of {} elements in {} ms",
         constraints.constraint_count(),
         constraints.evaluation_domain_size(), // trace.domain_size() / stride
-        now.elapsed().as_millis());
+        now.elapsed().as_millis()
+    );
 
     // 4 ----- convert constraint evaluations into a polynomial -----------------------------------
     let now = Instant::now();
     let constraint_poly = constraints.combine_polys();
-    debug!("Converted constraint evaluations into a single polynomial of degree {} in {} ms",
+    debug!(
+        "Converted constraint evaluations into a single polynomial of degree {} in {} ms",
         constraint_poly.degree(),
-        now.elapsed().as_millis());
+        now.elapsed().as_millis()
+    );
 
     // 5 ----- build Merkle tree from constraint polynomial evaluations ---------------------------
     let now = Instant::now();
-    
+
     // evaluate constraint polynomial over the evaluation domain
     let constraint_evaluations = constraint_poly.eval(&lde_twiddles);
 
     // put evaluations into a Merkle tree; 4 evaluations per leaf
     let constraint_evaluations = evaluations_to_leaves(constraint_evaluations);
     let constraint_tree = MerkleTree::new(constraint_evaluations, options.hash_fn());
-    debug!("Evaluated constraint polynomial and built constraint Merkle tree in {} ms",
-        now.elapsed().as_millis());
+    debug!(
+        "Evaluated constraint polynomial and built constraint Merkle tree in {} ms",
+        now.elapsed().as_millis()
+    );
 
     // 6 ----- build and evaluate deep composition polynomial -------------------------------------
     let now = Instant::now();
@@ -105,22 +117,31 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
 
     // evaluate the composition polynomial over LDE domain
     let mut composed_evaluations = composition_poly;
-    debug_assert!(composed_evaluations.capacity() == lde_domain.len(), "invalid composition polynomial capacity");
-    unsafe { composed_evaluations.set_len(composed_evaluations.capacity()); }
+    debug_assert!(
+        composed_evaluations.capacity() == lde_domain.len(),
+        "invalid composition polynomial capacity"
+    );
+    unsafe {
+        composed_evaluations.set_len(composed_evaluations.capacity());
+    }
     polynom::eval_fft_twiddles(&mut composed_evaluations, &lde_twiddles, true);
 
-    debug!("Built composition polynomial and evaluated it over domain of {} elements in {} ms",
+    debug!(
+        "Built composition polynomial and evaluated it over domain of {} elements in {} ms",
         composed_evaluations.len(),
-        now.elapsed().as_millis());
+        now.elapsed().as_millis()
+    );
 
     // 7 ----- compute FRI layers for the composition polynomial ----------------------------------
     let now = Instant::now();
     let composition_degree = utils::get_composition_degree(trace.unextended_length());
     debug_assert!(composition_degree == polynom::infer_degree(&composed_evaluations));
     let (fri_trees, fri_values) = fri::reduce(&composed_evaluations, &lde_domain, options);
-    debug!("Computed {} FRI layers from composition polynomial evaluations in {} ms",
-    fri_trees.len(),
-        now.elapsed().as_millis());
+    debug!(
+        "Computed {} FRI layers from composition polynomial evaluations in {} ms",
+        fri_trees.len(),
+        now.elapsed().as_millis()
+    );
 
     // 8 ----- determine query positions -----------------------------------------------------------
     let now = Instant::now();
@@ -140,10 +161,12 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
 
     // generate pseudo-random query positions
     let positions = utils::compute_query_positions(&seed, lde_domain.len(), options);
-    debug!("Determined {} query positions from seed {} in {} ms",
+    debug!(
+        "Determined {} query positions from seed {} in {} ms",
         positions.len(),
         hex::encode(seed),
-        now.elapsed().as_millis());
+        now.elapsed().as_millis()
+    );
 
     // 9 ----- build proof object -----------------------------------------------------------------
     let now = Instant::now();
@@ -171,7 +194,8 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         trace.ctx_depth(),
         trace.loop_depth(),
         trace.stack_depth(),
-        &options);
+        &options,
+    );
 
     debug!("Built proof object in {} ms", now.elapsed().as_millis());
     return proof;
@@ -187,7 +211,10 @@ fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
 
 /// Re-interpret vector of 16-byte values as a vector of 32-byte arrays
 fn evaluations_to_leaves(evaluations: Vec<u128>) -> Vec<[u8; 32]> {
-    assert!(evaluations.len() % 2 == 0, "number of values must be divisible by 2");
+    assert!(
+        evaluations.len() % 2 == 0,
+        "number of values must be divisible by 2"
+    );
     let mut v = std::mem::ManuallyDrop::new(evaluations);
     let p = v.as_mut_ptr();
     let len = v.len() / 2;
@@ -195,7 +222,11 @@ fn evaluations_to_leaves(evaluations: Vec<u128>) -> Vec<[u8; 32]> {
     return unsafe { Vec::from_raw_parts(p as *mut [u8; 32], len, cap) };
 }
 
-fn build_composition_poly(trace: &TraceTable, constraint_poly: ConstraintPoly, seed: &[u8; 32]) -> (Vec<u128>, DeepValues) {
+fn build_composition_poly(
+    trace: &TraceTable,
+    constraint_poly: ConstraintPoly,
+    seed: &[u8; 32],
+) -> (Vec<u128>, DeepValues) {
     // pseudo-randomly selection deep point z and coefficients for the composition
     let z = field::prng(*seed);
     let coefficients = CompositionCoefficients::new(*seed);
@@ -206,5 +237,11 @@ fn build_composition_poly(trace: &TraceTable, constraint_poly: ConstraintPoly, s
     // divide out deep point from constraint polynomial and merge it into the result
     constraint_poly.merge_into(&mut result, z, &coefficients);
 
-    return (result, DeepValues { trace_at_z1: s1, trace_at_z2: s2 });
+    return (
+        result,
+        DeepValues {
+            trace_at_z1: s1,
+            trace_at_z2: s2,
+        },
+    );
 }

@@ -47,26 +47,6 @@ pub fn enforce_inv(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], 
     enforce_stack_copy(result, old_stack, new_stack, 1, op_flag);
 }
 
-pub fn enforce_rotateleft32(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128)
-{
-
-    let x = old_stack[0] as u32;
-    let y = old_stack[1] as u32;
-    let r = y.rotate_left(x);
-
-    result.agg_constraint(0, op_flag, are_equal(new_stack[0], r as u128));
-    enforce_left_shift(result, old_stack, new_stack, 2, 1, op_flag);
-}
-
-pub fn enforce_xor32(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128)
-{
-    let x = old_stack[0] as u32;
-    let y = old_stack[1] as u32;
-    let r = x ^ y;
-
-    result.agg_constraint(0, op_flag, are_equal(new_stack[0], r as u128));
-    enforce_left_shift(result, old_stack, new_stack, 2, 1, op_flag);
-}
 
 /// Enforces constraints for NEG operation. The constraints are based on the first element of
 /// the stack; the rest of the stack is unaffected.
